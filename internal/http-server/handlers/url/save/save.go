@@ -1,6 +1,7 @@
 package save
 
 import (
+	"fmt"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
 	"golang.org/x/exp/slog"
@@ -45,6 +46,6 @@ func New(log *slog.Logger, urlSaver URLSaver) http.HandlerFunc {
 		}
 
 		log.Info("request body decoded", slog.Any("request", req))
-
+		fmt.Println("test message")
 	}
 }
