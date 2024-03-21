@@ -1,6 +1,7 @@
 package save
 
 import (
+	"errors"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
 	"github.com/go-playground/validator/v10"
@@ -9,6 +10,7 @@ import (
 	resp "url-shortener/internal/http-server/lib/api/response"
 	"url-shortener/internal/lib/logger/sl"
 	"url-shortener/internal/lib/random"
+	"url-shortener/internal/storage"
 )
 
 // здесь будет храниться функция конструктор для хендлера
@@ -65,5 +67,31 @@ func New(log *slog.Logger, urlSaver URLSaver) http.HandlerFunc {
 		if alias == "" { // если пользователь не указал алиас
 			alias = random.NewRandomString(aliasLength)
 		}
+
+		// сохранение urlSaver в id
+		id, err := urlSaver.SaveURL(req.URL, alias)
+		// если url уже существует
+		if errors.Is(err, storage.ErrURLExists) {
+			log.Info("url already exists", slog.String("url", req.URL))
+
+			render.JSON(w, r, resp.Error("URL already exists"))
+
+			return
+		}
+		// ошибка при добавлении url
+		if err != nil {
+			log.Error("failed to add url", sl.Err(err))
+
+			render.JSON(w, r, resp.Error("failed to add url"))
+
+			return
+		}
+		// url точно есть, теперь пишем, что он есть
+		log.Info("url added", slog.Int64("id", id))
+
+		render.JSON(w, r, Response{
+			Response: resp.OK(),
+			Alias:    alias,
+		})
 	}
 }

@@ -7,6 +7,7 @@ import (
 	"golang.org/x/exp/slog"
 	"os"
 	"url-shortener/internal/config"
+	"url-shortener/internal/http-server/handlers/url/save"
 	mwLogger "url-shortener/internal/http-server/middleware/logger"
 	"url-shortener/internal/lib/logger/handlers/slogpretty" // хуйня чисто для локального красивого пользования, а так ее в целом никогда неиспользовать
 	"url-shortener/internal/lib/logger/sl"
@@ -43,6 +44,7 @@ func main() {
 	router.Use(middleware.Recoverer) // Если есть паника в хендлере, чтобы можно было ее восстановить
 	router.Use(middleware.URLFormat) // для красивой записи Url при подключении к их обработчику(роутеру)
 
+	router.Post("/url", save.New(log, storage)) // подключение к роутеру handler save.go
 	// TODO: run server
 }
 
