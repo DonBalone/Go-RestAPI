@@ -5,6 +5,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"golang.org/x/exp/slog"
+	"net/http"
 	"os"
 	"url-shortener/internal/config"
 	"url-shortener/internal/http-server/handlers/url/save"
@@ -28,7 +29,7 @@ func main() {
 
 	log.Info("starting url-shortener", slog.String("env", cfg.Env))
 	log.Debug("debug messages are enabled")
-	log.Error("error messages are enabled")
+
 	storage, err := sqlite.New(cfg.StoragePath)
 	if err != nil {
 		log.Error("failed to init storage", sl.Err(err))
@@ -45,6 +46,23 @@ func main() {
 	router.Use(middleware.URLFormat) // для красивой записи Url при подключении к их обработчику(роутеру)
 
 	router.Post("/url", save.New(log, storage)) // подключение к роутеру handler save.go
+
+	log.Info("server started", slog.String("address", cfg.Address))
+
+	srv := &http.Server{
+		Addr:         cfg.Address,
+		Handler:      router,
+		ReadTimeout:  cfg.HTTPServer.Timeout,
+		WriteTimeout: cfg.HTTPServer.Timeout,
+		IdleTimeout:  cfg.HTTPServer.IdleTimeout,
+	}
+
+	if err := srv.ListenAndServe(); err != nil {
+		log.Error("failed to start server", sl.Err(err))
+	}
+
+	log.Error("server stopped")
+
 	// TODO: run server
 }
 

@@ -21,6 +21,9 @@ type Request struct {
 
 const aliasLength = 6
 
+// генерация mocky, херня, которая симулирует действия пользователя
+//go:generate go run github.com/vektra/mockery/v2@v2.28.2 --name=URLSaver
+
 type Response struct {
 	resp.Response
 	Alias string `json:"alias,omitempty"`
