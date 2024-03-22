@@ -44,11 +44,12 @@ func TestSaveHandler(t *testing.T) {
 
 			ts := httptest.NewServer(r)
 			defer ts.Close()
-
+			// получили тот url, на который произошел редирект
 			redirectedToURL, err := api.GetRedirect(ts.URL + "/" + tc.alias)
+			// проверяем, что при этом не произошло ошибок
 			require.NoError(t, err)
 
-			// Check the final URL after redirection.
+			// проверяем, что финальный url совпадает с ожидаемым
 			assert.Equal(t, tc.url, redirectedToURL)
 		})
 	}
