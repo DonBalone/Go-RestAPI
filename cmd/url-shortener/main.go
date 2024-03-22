@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"url-shortener/internal/config"
+	"url-shortener/internal/http-server/handlers/redirect"
 	"url-shortener/internal/http-server/handlers/url/save"
 	mwLogger "url-shortener/internal/http-server/middleware/logger"
 	"url-shortener/internal/lib/logger/handlers/slogpretty" // хуйня чисто для локального красивого пользования, а так ее в целом никогда неиспользовать
@@ -39,13 +40,16 @@ func main() {
 	router := chi.NewRouter()
 
 	router.Use(middleware.RequestID) // удобен для трейсинга, чтобы рассмотреть различные случаи при запросе, помогает отбросить все лишнее и оставить все, что касается только одного запроса
-	// middleware // есть крч главный хендлер, а есть остальные, это и есть middleware
+	// middleware - процесс работы с запросами, тип есть req и resp
+	// и нужно взять какую-то часть данных или добавить фичу, вот
+	// это и есть middleware
 	router.Use(middleware.Logger)    // логгер для обработки запроса
 	router.Use(mwLogger.New(log))    // самостоятельное логгирование
 	router.Use(middleware.Recoverer) // Если есть паника в хендлере, чтобы можно было ее восстановить
 	router.Use(middleware.URLFormat) // для красивой записи Url при подключении к их обработчику(роутеру)
 
 	router.Post("/url", save.New(log, storage)) // подключение к роутеру handler save.go
+	router.Get("/{alias}", redirect.New(log, storage))
 
 	log.Info("server started", slog.String("address", cfg.Address))
 

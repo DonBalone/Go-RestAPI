@@ -71,23 +71,33 @@ func TestSaveHandler(t *testing.T) {
 			}
 
 			handler := save.New(slogdiscard.NewDiscardLogger(), urlSaverMock)
-
+			// пример запроса
 			input := fmt.Sprintf(`{"url": "%s", "alias": "%s"}`, tc.url, tc.alias)
-
+			// создание нового запроса
 			req, err := http.NewRequest(http.MethodPost, "/save", bytes.NewReader([]byte(input)))
-			require.NoError(t, err)
+			// проверка, что здесь не должно быть ошибки
+			require.NoError(t, err) // require нужен, когда после него все будет сломано
+			// assert же нужен когда мы хотим проверить несколько кейсов, которые не зависят друг от друга
+			// т.е. продолжить затем работу кода
 
+			//тестирование http сервера
 			rr := httptest.NewRecorder()
+			// запускаем наш запрос
 			handler.ServeHTTP(rr, req)
-
+			// смотрим, какой статус вернул recorder
 			require.Equal(t, rr.Code, http.StatusOK)
-
+			// что было записано в тело
 			body := rr.Body.String()
 
 			var resp save.Response
-
+			// проверка на то, норм ли файлы в json'e,
+			// unmarshal разбирает json данные  в указанный объект,
+			// где body - входные данные в json формате
+			// &resp - куда нужно разобрать данные json
+			// возвращает внутрянка(json...) err, которые потом уже require
 			require.NoError(t, json.Unmarshal([]byte(body), &resp))
-
+			// смотрим, совпадает ли ошибка, которую вернул handler
+			// совпадает с ошибкой из testa
 			require.Equal(t, tc.respError, resp.Error)
 
 			// TODO: add more checks
