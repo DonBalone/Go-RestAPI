@@ -47,8 +47,19 @@ func main() {
 	router.Use(mwLogger.New(log))    // самостоятельное логгирование
 	router.Use(middleware.Recoverer) // Если есть паника в хендлере, чтобы можно было ее восстановить
 	router.Use(middleware.URLFormat) // для красивой записи Url при подключении к их обработчику(роутеру)
+	// роутер, который будет состоять из роутера, который
+	// принимает 2 значения: url и функцию с роутером chi
+	// все это нужно для авторизации
+	router.Route("/url", func(r chi.Router) {
+		// простая авторизация с отправкой лоигна и пароля в заголовке
+		r.Use(middleware.BasicAuth("url-shortener", map[string]string{
+			cfg.HTTPServer.User: cfg.HTTPServer.Password,
+		}))
 
-	router.Post("/url", save.New(log, storage)) // подключение к роутеру handler save.go
+		r.Post("/", save.New(log, storage)) // подключение к роутеру handler save.go
+		// TODO: add DELETE /url/{id}
+	})
+
 	router.Get("/{alias}", redirect.New(log, storage))
 
 	log.Info("server started", slog.String("address", cfg.Address))
